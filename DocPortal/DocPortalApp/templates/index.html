@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Home{% endblock %}
+{% block page_content %}
+<h1>Hi!
+    {% if request.user.is_authenticated %}
+        {{ request.user.get_username }}!
+        <li class="nav-item">
+            <a href="{% url 'logout' %}" class="nav-link smoothScroll">Log Out</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+            <a href="{% url 'login' %}" class="nav-link smoothScroll">Log In</a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'register' %}" class="nav-link smoothScroll">Registration</a>
+        </li>
+    {% endif %}
+HTML will be here soon</h1>
+{% endblock %}
