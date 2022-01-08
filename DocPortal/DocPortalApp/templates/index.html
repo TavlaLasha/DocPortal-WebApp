@@ -2,19 +2,220 @@
 {% load static %}
 {% block page_title %}Home{% endblock %}
 {% block page_content %}
-<h1>Hi!
-    {% if request.user.is_authenticated %}
-        {{ request.user.get_username }}!
-        <li class="nav-item">
-            <a href="{% url 'logout' %}" class="nav-link smoothScroll">Log Out</a>
-        </li>
-        {% else %}
-        <li class="nav-item">
-            <a href="{% url 'login' %}" class="nav-link smoothScroll">Log In</a>
-        </li>
-        <li class="nav-item">
-            <a href="{% url 'register' %}" class="nav-link smoothScroll">Registration</a>
-        </li>
-    {% endif %}
-HTML will be here soon</h1>
+<!-- start banner Area -->
+{% if request.user.is_authenticated %}
+<section class="banner-area relative about-banner" id="home">	
+    <div class="overlay overlay-bg"></div>
+    <div class="container">				
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Document Conversion</h1>
+            </div>	
+        </div>
+    </div>
+</section>
+{% else %}
+<section class="banner-area relative" id="home">
+    <div class="overlay overlay-bg"></div>	
+    <div class="container">
+        <div class="row fullscreen d-flex align-items-center justify-content-between">
+            <div class="banner-content col-lg-9 col-md-12">
+                <h1 class="text-uppercase">
+                    We Ensure your documents are held the right way			
+                </h1>
+                <p class="pt-10 pb-10">
+                    Start working with us and you will explore something you've always desired for.
+                </p>
+                <a href="#" class="primary-btn text-uppercase">Get Started</a>
+            </div>										
+        </div>
+    </div>					
+</section>
+{% endif %}
+<!-- End banner Area -->
+
+<!-- Start Drag&Drop Area -->
+
+<section class="feature-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl">
+                <div class="single-feature">
+                    <div class="title">
+                        <h3>Upload or Drag & Drop Document</h3>
+                    </div>
+                    <!-- ondrop="dropHandler(event);" ondragover="dragOverHandler(event);" -->
+                    <!-- <div id="drop_zone" class="desc-wrap"> -->
+                        
+                        
+                        <form action="/" method="POST" class="dropzone desc-wrap" id="drop_zone" enctype="multipart/form-data">
+                            <div id="loading" class="loading">
+                                <div>
+                                    <img src="{% static 'images/hug.gif' %}" alt="LOADING">
+                                    <h3>Converting...</h3>
+                                </div>
+                            </div>
+                            {% csrf_token %}
+                            {{form}}
+                            <button id="convertBtn" class="primary-btn text-uppercase" type="submit">Convert</button>
+                        </form>					
+                    <!-- </div> -->
+                </div>
+            </div>
+        </div>
+</section>
+<!-- End Drag&Drop Area -->
+<br><br>
+<!-- Start cta-two Area -->
+<section class="cta-two-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 cta-left">
+                <h3>Having questions or need any sort of help? Send us an email!</h3>
+            </div>
+            <div class="col-lg-4 cta-right">
+                <a class="primary-btn wh" href="#">support@docportal.com</a>
+            </div>
+        </div>
+    </div>	
+</section>
+<!-- End cta-two Area -->
+
+<script>
+    Dropzone.options.dropZone = {
+        autoProcessQueue: false,
+        autoQueue: true,
+        maxFilesize: 2,
+        dictDefaultMessage: ' <img src="{% static "images/convert.png" %}" alt="image here"> <br><br> Drop or browse your document to convert it to docx or PDF',
+        maxFiles: 1,
+        thumbnailWidth: 150,
+        addRemoveLinks: true,
+        createImageThumbnails: false,
+        thumbnailMethod: "contain",
+        acceptedFiles: 'application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+
+        addedfile: function(file) {
+            if (this.element === this.previewsContainer) {
+                this.element.classList.add("dz-started");
+            }
+
+            if (this.previewsContainer && !this.options.disablePreviews) {
+                file.previewElement = Dropzone.createElement(
+                this.options.previewTemplate.trim()
+            );
+            if((file.type == "application/pdf") || (file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")){
+                file.previewElement.classList.remove("dz-file-preview");
+                for (let thumbnailElement of file.previewElement.querySelectorAll(
+                    "[data-dz-thumbnail]"
+                )) {
+                    if(file.type == "application/pdf"){
+                        thumbnailElement.alt = file.name;
+                        thumbnailElement.src = "{% static 'images/pdf.png' %}";
+                    }
+                    if(file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+                        thumbnailElement.alt = file.name;
+                        thumbnailElement.src = "{% static 'images/docx.png' %}";
+                    }
+                }
+                setTimeout(
+                    () => file.previewElement.classList.add("dz-image-preview"),
+                    1
+                );
+            }
+            file.previewTemplate = file.previewElement; // Backwards compatibility
+
+            this.previewsContainer.appendChild(file.previewElement);
+            for (var node of file.previewElement.querySelectorAll("[data-dz-name]")) {
+                node.textContent = file.name;
+            }
+            for (node of file.previewElement.querySelectorAll("[data-dz-size]")) {
+                node.innerHTML = this.filesize(file.size);
+            }
+
+            if (this.options.addRemoveLinks) {
+                file._removeLink = Dropzone.createElement(
+                `<a class="dz-remove" href="javascript:undefined;" data-dz-remove>${this.options.dictRemoveFile}</a>`
+                );
+                file.previewElement.appendChild(file._removeLink);
+            }
+            document.getElementById("convertBtn").style.display="inline-block";
+            let removeFileEvent = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (file.status === Dropzone.UPLOADING) {
+                return Dropzone.confirm(
+                    this.options.dictCancelUploadConfirmation,
+                    () => this.removeFile(file)
+                );
+                } else {
+                if (this.options.dictRemoveFileConfirmation) {
+                    return Dropzone.confirm(
+                    this.options.dictRemoveFileConfirmation,
+                    () => this.removeFile(file)
+                    );
+                } else {
+                    return this.removeFile(file);
+                }
+                }
+            };
+
+            for (let removeLink of file.previewElement.querySelectorAll(
+                "[data-dz-remove]"
+            )) {
+                removeLink.addEventListener("click", removeFileEvent);
+            }
+            }
+        },
+
+        init: function(){
+            var dropZone = this;
+            this.element.querySelector("button[type=submit]").addEventListener("click", function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.processQueue();
+            })
+            this.on("sending", function(files) {
+                // setTimeout(function(){
+                    Dropzone.options.dropZone["clickable"] = false
+                    document.getElementById("loading").style.display="block";
+                    document.getElementById("drop_zone").style.border="transparent";
+                // }, 1000);
+            });
+            this.on("complete", function(files, response) {
+                document.getElementById("loading").style.display="none";
+            });
+            this.on("success", function(files, response) {
+                setTimeout(function(){
+                    window.location.replace('/converted/'+response['fileName']);
+                }, 1000);
+            });
+        }
+    };
+</script>
+
+{% endblock %}
+
+{% block footer_content %}
+<div class="row">																							
+    <div class="col-xl  col-md-6 col-sm-6">
+        <div class="single-footer-widget">
+            <h4>Newsletter</h4>
+            <p>Stay update with our latest</p>
+            <div class="" id="mc_embed_signup">
+                 <form target="_blank" action="https://spondonit.us12.list-manage.com/subscribe/post?u=1462626880ade1ac87bd9c93a&amp;id=92a4423d01" method="get">
+                  <div class="input-group">
+                    <input type="text" class="form-control" name="EMAIL" placeholder="Enter Email Address" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Enter Email Address '" required="" type="email">
+                    <div class="input-group-btn">
+                      <button class="btn btn-default" type="submit">
+                        <span class="lnr lnr-arrow-right"></span>
+                      </button>    
+                    </div>
+                        <div class="info"></div>  
+                  </div>
+                </form> 
+            </div>
+        </div>
+    </div>											
+</div>
+<br><br>
 {% endblock %}

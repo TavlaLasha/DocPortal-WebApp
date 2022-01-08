@@ -3,7 +3,7 @@ from django.db import models
 from django.db.models import fields
 from django.contrib.auth import (authenticate, get_user_model)
 from django.core.validators import validate_email
-from . import models
+from .models import File_Types, User_Docs
 
 User = get_user_model()
 
@@ -33,7 +33,7 @@ class UserRegisterForm(forms.ModelForm):
     username = forms.CharField(label='', widget=forms.TextInput(attrs={'placeholder': 'Username', 'class': 'form-control', 'data-aos':'fade-up', 'data-aos-delay':'200'}))
     password = forms.CharField(label='', widget=forms.PasswordInput(attrs={'placeholder': 'Password', 'class': 'form-control', 'data-aos':'fade-up', 'data-aos-delay':'200'}))
     conf_password = forms.CharField(label='', widget=forms.PasswordInput(attrs={'placeholder': 'Confirm Password', 'class': 'form-control', 'data-aos':'fade-up', 'data-aos-delay':'200'}))
-    agreesPolicy = forms.BooleanField(label='Agree')
+    agreesPolicy = forms.BooleanField(label='I Agree With Terms & Conditions')
 
     class Meta:
         model = User
@@ -69,23 +69,18 @@ class UserRegisterForm(forms.ModelForm):
         return super(UserRegisterForm, self).clean(*args, **kwargs)
 
 
-class DocForm(forms.ModelForm):
-    file = forms.FileField()
+class DocForm(forms.Form):
+    file = forms.FileField(label='', widget=forms.FileInput(attrs={'id':'filB', 'class': 'form-control', 'hidden':'true'}))
 
-    class Meta:
-        model = models.User_Doc
-        fields = [
-            'fileName',
-            'fileType',
-            'file'
-        ]
+    def clean(self, *args, **kwargs):
+        file = self.cleaned_data.get('file')
 
-    # def clean(self, *args, **kwargs):
-    #     file = self.cleaned_data.get('file')
-
-    #     if not file:
-    #         raise forms.ValidationError('No file uploaded')
-
-    #     fileName
+        if file:
+            filename = file.name
+            supportedTypes = File_Types.objects.values_list('name', flat=True).distinct()[::1]
+            if not filename.lower().endswith(tuple(supportedTypes)):
+                raise forms.ValidationError("Unsupported File Type")
+        else:
+            raise forms.ValidationError('No file uploaded')
         
-    #     return super(DocForm, self).clean(*args, **kwargs)
+        return super(DocForm, self).clean(*args, **kwargs)

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Home{% endblock %}
+{% block page_content %}
+<!-- start banner Area -->
+{% if request.user.is_authenticated %}
+<section class="banner-area relative about-banner" id="home">	
+    <div class="overlay overlay-bg"></div>
+    <div class="container">				
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">Document Conversion</h1>
+            </div>	
+        </div>
+    </div>
+</section>
+{% else %}
+<section class="banner-area relative" id="home">
+    <div class="overlay overlay-bg"></div>	
+    <div class="container">
+        <div class="row fullscreen d-flex align-items-center justify-content-between">
+            <div class="banner-content col-lg-9 col-md-12">
+                <h1 class="text-uppercase">
+                    We Ensure your documents are held the right way			
+                </h1>
+                <p class="pt-10 pb-10">
+                    Start working with us and you will explore something you've always desired for.
+                </p>
+                <a href="#" class="primary-btn text-uppercase">Get Started</a>
+            </div>										
+        </div>
+    </div>
+</section>
+{% endif %}
+<!-- End banner Area -->
+
+<!-- Start Drag&Drop Area -->
+
+<section class="feature-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl">
+                <div class="single-feature">
+                    <div class="title">
+                        <h2>Converted Document</h2>
+                    </div>
+                    <div class="fileRow">
+                        {% if fileUrl %}
+                        {% static "" as baseUrl %}
+                        
+                        <div class="typeImage">
+                            {% if fileType == ".docx" %}
+                            <img src="{{ baseUrl}}images/pdf.png" alt="PDF" class="tp1">
+                            <span>&#8680;</span>
+                            <img src="{{ baseUrl}}images/docx.png" alt="DOCX" class="tp2">
+                            {% elif fileType == ".pdf" %}
+                            <img src="{{ baseUrl}}images/docx.png" alt="DOCX" class="tp1">
+                            <span>&#8680;</span>
+                            <img src="{{ baseUrl}}images/pdf.png" alt="PDF" class="tp2">
+                            {% else %}
+                            <img src="{{ baseUrl}}images/notype.png" alt="Unsupported Type" class="tp2">
+                            {% endif %}
+                        </div>
+                        <div class="cont">
+                            <h4>{{fileName}}</h4>
+                            <h4>{{fileSize}} KB</h4>
+                            {% if request.user.is_authenticated %}
+                            <form action="/profile/" method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <input type="hidden" name="fileName" value="{{fileName}}">
+                                <input type="submit" class="primary-btn text-uppercase" value="Add to Profile" style="margin-top: 10px;">
+                            </form>
+                            {% endif %}
+                            <a href="{{fileUrl}}" class="primary-btn text-uppercase" target="blank" style="margin-top: 10px;">Download</a>
+                        </div>
+                        {% else %}	
+                            <h4>ERROR 404</h4>
+                        {% endif %}								
+                    </div>
+                </div>
+            </div>
+        </div>
+</section>
+<!-- End Drag&Drop Area -->
+<br><br>
+<!-- Start cta-two Area -->
+<section class="cta-two-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 cta-left">
+                <h3>Having questions or need any sort of help? Send us an email!</h3>
+            </div>
+            <div class="col-lg-4 cta-right">
+                <a class="primary-btn wh" href="#">support@docportal.com</a>
+            </div>
+        </div>
+    </div>	
+</section>
+<!-- End cta-two Area -->
+<script type="text/javascript">
+    window.onbeforeunload = function(){
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        var fileName = "{{fileName}}";
+
+        var request = $.ajax({
+        url: "/profile/deleteFile/"+fileName,
+        type: "DELETE",
+        headers: {'X-CSRFToken': csrftoken},
+        data: {doc : fileName},
+        dataType: "html"
+        });
+
+        request.fail(function(jqXHR, textStatus) {
+            console.log( "Request failed: " + textStatus );
+        });
+    };
+</script>
+{% endblock %}
+
+{% block footer_content %}
+<div class="row">																							
+    <div class="col-xl  col-md-6 col-sm-6">
+        <div class="single-footer-widget">
+            <h4>Newsletter</h4>
+            <p>Stay update with our latest</p>
+            <div class="" id="mc_embed_signup">
+                 <form target="_blank" action="https://spondonit.us12.list-manage.com/subscribe/post?u=1462626880ade1ac87bd9c93a&amp;id=92a4423d01" method="get">
+                  <div class="input-group">
+                    <input type="text" class="form-control" name="EMAIL" placeholder="Enter Email Address" onfocus="this.placeholder = ''" onblur="this.placeholder = 'Enter Email Address '" required="" type="email">
+                    <div class="input-group-btn">
+                      <button class="btn btn-default" type="submit">
+                        <span class="lnr lnr-arrow-right"></span>
+                      </button>    
+                    </div>
+                        <div class="info"></div>  
+                  </div>
+                </form> 
+            </div>
+        </div>
+    </div>											
+</div>
+{% endblock %}

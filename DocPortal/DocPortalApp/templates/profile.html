@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Profile{% endblock %}
+{% block page_content %}
+<!-- start banner Area -->
+<section class="banner-area relative about-banner" id="home">	
+    <div class="overlay overlay-bg"></div>
+    <div class="container">				
+        <div class="row d-flex align-items-center justify-content-center">
+            <div class="about-content col-lg-12">
+                <h1 class="text-white">
+                    Your Profile				
+                </h1>	
+                <p class="text-white link-nav"><a href="{% url 'index' %}">Home </a>  <span class="lnr lnr-arrow-right"></span>  <a href="{% url 'profile' %}"> Profile</a></p>
+            </div>	
+        </div>
+    </div>
+</section>
+<!-- End banner Area -->
+<section class="feature-area">
+    <div class="container">
+        <div class="row">
+            <div class="col-xl">
+                <div class="single-feature">
+                        <form action="/profile/" method="POST" class="dropzone desc-wrap" id="drop_zone_upload" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{form}}
+                        </form>
+                </div>
+            </div>
+        </div>
+</section>
+
+{% if uploaded %}
+<div class="success"><h4>Document(s) uploaded succesfully</h4></div>
+{% endif %}	
+{% if deletedFile %}
+<div class="danger"><h4>Document {{deletedFile}} deleted succesfully</h4></div>
+{% endif %}	
+
+{% if docs %}
+{% static "" as baseUrl %}
+<table>
+    <thead>
+        <th>Type</th>
+        <th>Name</th>
+        <th>Upload Date</th>
+        <th>Size</th>
+        <th colspan="2"></th>
+    </thead>
+    <tbody>
+        {% for doc in docs %}
+        <tr>
+            <td><img src="{{ baseUrl}}images/{{doc.fileType}}.png" width="40" alt="{{doc.fileType}}"></td>
+            <td>{{doc.fileName}}</td>
+            <td>{{doc.date}}</td>
+            <td>{{doc.fileSize}} kb</td>
+            <td><a href="{{doc.file.url}}" target="blank">Download</a></td>
+            <td>
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="fileUrl" value="{{doc.file.url}}">
+                    <input type="submit" style="cursor: pointer;" value="Delete">
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% if docs.has_other_pages %}
+  <ul class="pagination">
+    {% if docs.has_previous %}
+      <li class="page-item"><a href="?page={{ docs.previous_page_number }}" class="page-link">&laquo;</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+    {% endif %}
+    {% for i in docs.paginator.page_range %}
+      {% if docs.number == i %}
+        <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
+      {% else %}
+        <li class="page-item"><a href="?page={{ i }}" class="page-link">{{ i }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if docs.has_next %}
+      <li class="page-item"><a href="?page={{ docs.next_page_number }}" class="page-link">&raquo;</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+    {% endif %}
+  </ul>
+{% endif %}
+{% endif %}	
+<script>
+    Dropzone.options.dropZoneUpload = {
+        autoProcessQueue: true,
+        autoQueue: true,
+        maxFilesize: 2,
+        dictDefaultMessage: '<h3>Drag & Drop or Click to Upload your document</h3>',
+        addRemoveLinks: true,
+        acceptedFiles: 'application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+
+        addedfile: function(file) {
+            if (this.element === this.previewsContainer) {
+                this.element.classList.add("dz-started");
+            }
+
+            if (this.previewsContainer && !this.options.disablePreviews) {
+                file.previewElement = Dropzone.createElement(
+                this.options.previewTemplate.trim()
+            );
+            if((file.type == "application/pdf") || (file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document")){
+                file.previewElement.classList.remove("dz-file-preview");
+                for (let thumbnailElement of file.previewElement.querySelectorAll(
+                    "[data-dz-thumbnail]"
+                )) {
+                    if(file.type == "application/pdf"){
+                        thumbnailElement.alt = file.name;
+                        thumbnailElement.src = "{% static 'images/pdf.png' %}";
+                    }
+                    if(file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"){
+                        thumbnailElement.alt = file.name;
+                        thumbnailElement.src = "{% static 'images/docx.png' %}";
+                    }
+                }
+                setTimeout(
+                    () => file.previewElement.classList.add("dz-image-preview"),
+                    1
+                );
+            }
+            file.previewTemplate = file.previewElement; // Backwards compatibility
+
+            this.previewsContainer.appendChild(file.previewElement);
+            for (var node of file.previewElement.querySelectorAll("[data-dz-name]")) {
+                node.textContent = file.name;
+            }
+            for (node of file.previewElement.querySelectorAll("[data-dz-size]")) {
+                node.innerHTML = this.filesize(file.size);
+            }
+
+            if (this.options.addRemoveLinks) {
+                file._removeLink = Dropzone.createElement(
+                `<a class="dz-remove" href="javascript:undefined;" data-dz-remove>${this.options.dictRemoveFile}</a>`
+                );
+                file.previewElement.appendChild(file._removeLink);
+            }
+            let removeFileEvent = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (file.status === Dropzone.UPLOADING) {
+                return Dropzone.confirm(
+                    this.options.dictCancelUploadConfirmation,
+                    () => this.removeFile(file)
+                );
+                } else {
+                if (this.options.dictRemoveFileConfirmation) {
+                    return Dropzone.confirm(
+                    this.options.dictRemoveFileConfirmation,
+                    () => this.removeFile(file)
+                    );
+                } else {
+                    return this.removeFile(file);
+                }
+                }
+            };
+
+            for (let removeLink of file.previewElement.querySelectorAll(
+                "[data-dz-remove]"
+            )) {
+                removeLink.addEventListener("click", removeFileEvent);
+            }
+            }
+        },
+
+        init: function(){
+            var dropZone = this;
+            this.on("success", function(files, response) {
+                window.location.replace('/profile/');
+            });
+        }
+    };
+</script>
+{% endblock %}
